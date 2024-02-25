@@ -1,3 +1,5 @@
+# 注意，这是我个人魔改的一个版本，适用于我的个性化业务的微调、部署、加速。
+# 如果你只是想按照官方版本部署chatglm3，请移步至THUDM/ChatGLM3
 # ChatGLM3
 
 <p align="center">
