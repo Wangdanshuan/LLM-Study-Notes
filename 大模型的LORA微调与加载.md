@@ -1,3 +1,4 @@
+
 我使用LORA进行微调时候，他用了如下方式加载模型：
 ```
             model = transformers.AutoModelForCausalLM.from_pretrained(
