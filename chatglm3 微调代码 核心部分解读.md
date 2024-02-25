@@ -1,6 +1,6 @@
 # 1.改写Seq2SeqTrainer
 
-我认为这里的改写目的就是让输出的generated_tokens只有模型生成部分的tocken，对于用户输入已经过滤掉了。
+我认为这里的改写目的就是让输出的generated_tokens只有模型生成部分的tocken，即过滤掉用户输入的内容（tokens id）。
 以及在验证或者预测时，在输入模型之前，从inputs拿掉"output_ids"，总之看起来并不是很关键。这里inputs不包含"labels"，只有"input_ids"，然后输入模型，prediction_loss_only的设置为False因此也不需要计算损失。
 
 ```
