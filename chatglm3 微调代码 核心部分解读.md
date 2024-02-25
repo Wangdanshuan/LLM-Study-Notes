@@ -1,9 +1,6 @@
 # 1.改写Seq2SeqTrainer
 
-目的： chatglm是生成模型，这里的改写目的就是只对模型生成的部分计算性能指标，比如generated_tokens只有模型生成部分的tocken，对于用户输入已经过滤掉了不进行评估。
 ```
-from transformers import Seq2SeqTrainer as _Seq2SeqTrainer
-
 class Seq2SeqTrainer(_Seq2SeqTrainer):
     def prediction_step(
             self,
@@ -17,15 +14,27 @@ class Seq2SeqTrainer(_Seq2SeqTrainer):
         if self.args.predict_with_generate:
             output_ids = inputs.pop('output_ids')
         input_ids = inputs['input_ids']
+
         loss, generated_tokens, labels = super().prediction_step(
             model, inputs, prediction_loss_only, ignore_keys, **gen_kwargs
         )
         generated_tokens = generated_tokens[:, input_ids.size()[1]:]
         if self.args.predict_with_generate:
             labels = output_ids
-        # 这里的改写目的就是只对模型生成的部分计算损失，generated_tokens只有模型生成部分的tocken，对于用户输入已经过滤掉了
+        # 我认为这里的改写目的就是generated_tokens只有模型生成部分的tocken，对于用户输入已经过滤掉了
+        # 以及从inputs拿掉"output_ids"
+        # 总之看起来并不是很关键
         return loss, generated_tokens, labels
 ```
+从模型训练保存的配置文件中我注意到，prediction_loss_only的设置为False。它是默认设置的，也就是不计算损失，inputs中不需要包括"labels"。
+transformers其实很非常多的参数，一般只对其一部分设置，其余的均保持默认。
+具体的参数设置可以通过如下方式查看：
+        ```
+         from transformers import Seq2SeqTrainingArguments
+         # 查看 Seq2SeqTrainingArguments 的文档字符串
+         help(Seq2SeqTrainingArguments)
+        ```
+        
 
 # 2. 模型加载以及用peft封装，以进行lora微调。参考“大模型的LORA微调与加载.md”
 # 3. 数据的预处理
