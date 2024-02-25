@@ -40,7 +40,7 @@ transformers其实很非常多的参数，一般只对其一部分设置，其�
 # 2. 模型加载以及用peft封装，以进行lora微调。参考“大模型的LORA微调与加载.md”
 # 3. 数据的预处理
 
-
+下面是对训练数据集的预处理，主要内容就是将原始文本转化为token ids，函数输出的inputs包含"labels"和"input_ids"两个元素。
 ```
 def process_batch(
         batch: Mapping[str, Sequence],
