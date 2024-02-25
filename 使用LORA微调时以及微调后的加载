@@ -1,5 +1,5 @@
 我使用LORA进行微调时候，他用了如下方式加载模型：
-"""
+```
             model = transformers.AutoModelForCausalLM.from_pretrained(
                 model_dir,
                 trust_remote_code=True,
@@ -7,7 +7,7 @@
                 use_cache=False
             )
             model = peft.get_peft_model(model, peft_config)
-"""
+```
 他在另一个推断脚本代码中，使用了
 'peft.AutoPeftModelForCausalLM'加载模型，这是为什么？这两种方法有什么区别吗？
 
