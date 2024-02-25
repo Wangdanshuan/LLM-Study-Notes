@@ -1,5 +1,8 @@
 # 1.改写Seq2SeqTrainer
 
+我认为这里的改写目的就是让输出的generated_tokens只有模型生成部分的tocken，对于用户输入已经过滤掉了。
+以及在验证或者预测时，在输入模型之前，从inputs拿掉"output_ids"，总之看起来并不是很关键。这里inputs不包含"labels"，只有"input_ids"，然后输入模型，prediction_loss_only的设置为False因此也不需要计算损失。
+
 ```
 class Seq2SeqTrainer(_Seq2SeqTrainer):
     def prediction_step(
@@ -21,9 +24,7 @@ class Seq2SeqTrainer(_Seq2SeqTrainer):
         generated_tokens = generated_tokens[:, input_ids.size()[1]:]
         if self.args.predict_with_generate:
             labels = output_ids
-        # 我认为这里的改写目的就是generated_tokens只有模型生成部分的tocken，对于用户输入已经过滤掉了
-        # 以及从inputs拿掉"output_ids"
-        # 总之看起来并不是很关键
+
         return loss, generated_tokens, labels
 ```
 从模型训练保存的配置文件中我注意到，prediction_loss_only的设置为False。它是默认设置的，也就是不计算损失，inputs中不需要包括"labels"。
