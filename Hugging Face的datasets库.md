@@ -318,38 +318,3 @@ predictions = predict_in_batches(test_dataset)
 为了按批次处理数据集并进行预测，你需要确保每个批次都是一个有效的数据集对象。你可以使用`datasets.Dataset.select`方法从原始数据集中创建包含特定索引的子集。然后，可以将这些子集分别传递给`predict`方法以进行预测。
 
 修正后的代码示例如下：
-
-```python
-from datasets import load_dataset
-import numpy as np
-
-# 假设 test_dataset 是一个已经经过预处理的 Dataset 对象
-test_dataset = load_dataset('squad', split='validation')
-
-# 初始化 Seq2SeqTrainer
-trainer = Seq2SeqTrainer(
-    model=model,  # 你的模型
-    args=training_args,
-    # 可以添加 compute_metrics 函数来计算评估指标
-)
-
-# 函数：分批处理数据并进行预测
-def predict_in_batches(dataset, batch_size=32*30):
-    predictions = []
-    for i in range(0, len(dataset), batch_size):
-        # 使用 select 方法创建数据集的子集
-        batch_indices = range(i, min(i + batch_size, len(dataset)))
-        batch_dataset = dataset.select(batch_indices)
-        
-        # 调用 Seq2SeqTrainer 的 predict 方法进行预测
-        preds = trainer.predict(batch_dataset)
-        predictions.append(preds.predictions)
-    
-    # 根据你的模型和任务调整合并预测结果的方法
-    return np.concatenate(predictions, axis=0)
-
-# 对整个测试集进行分批预测
-predictions = predict_in_batches(test_dataset)
-```
-
-这个修正后的代码片段通过在每个循环迭代中使用`select`方法创建数据集的一个子集，确保了每次调用`predict`方法时传递的都是一个有效的数据集对象。这样就可以避免由于传递了错误的参数类型而导致的`KeyError`。
