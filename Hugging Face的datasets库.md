@@ -37,8 +37,9 @@ print(validation_dataset[:3])
 总的来说，`dataset = load_dataset('squad')`返回的是一个包含多个`Dataset`对象的`DatasetDict`对象，方便你分别处理数据集的不同部分。
 
 # 2 `Dataset`对象的特点
-问题：datasets.Dataset返回的对象，是类似于迭代器的存在吗？还是说它是完全把数据加载到内存的？它与data_collator、DataCollatorForSeq2Seq怎么搭配应用？
-答复：
+### 问题：datasets.Dataset返回的对象，是类似于迭代器的存在吗？还是说它是完全把数据加载到内存的？它与data_collator、DataCollatorForSeq2Seq怎么搭配应用？
+
+### 答案：
 Hugging Face `datasets`库中的`Dataset`对象与迭代器不同，它更像是一个包含数据集全部或部分数据的容器，具有高效的数据处理和访问能力。它并不是在迭代时动态生成数据项的迭代器，但提供了强大的按需加载和处理数据的能力，这得益于其底层使用Apache Arrow格式存储数据。
 
 ### 内存效率
