@@ -148,3 +148,92 @@ trainer.train()
 在这个示例中，首先定义了训练参数`Seq2SeqTrainingArguments`，然后创建了一个`DataCollatorForSeq2Seq`实例来处理批数据。接着，使用这些参数和数据处理函数创建了`Seq2SeqTrainer`实例，并通过调用`.train()`方法启动了训练过程。
 
 总的来说，`Seq2SeqTrainer`提供了一套丰富的接口和方法来定制序列到序列模型的训练和评估过程，包括灵活的数据处理、训练循环定制和性能评估。
+
+
+
+# 4.原始数据的Dataset对象能否直接传进Seq2SeqTrainer/Trainer？
+
+### 问题：
+这样的train_dataset:
+```
+from datasets import load_dataset
+# 加载数据集
+dataset = load_dataset('squad')
+
+# 提取训练集部分
+train_dataset = dataset['train']
+```
+train_dataset能否直接传进Seq2SeqTrainer，即数据还未编码。
+然后，传入Seq2SeqTrainer一个预处理函数，以及填充或阶段的一个data_collator?
+
+### 答案:
+直接将未编码的`train_dataset`传递给`Seq2SeqTrainer`是不可行的，因为`Seq2SeqTrainer`（和`Trainer`类一样）期望数据已经被适当处理和编码。这意味着在传递给`Seq2SeqTrainer`之前，数据需要被转换为模型能够理解的格式，比如将文本转换为输入ID（通常是通过分词器完成的）。
+
+不过，你可以在创建数据集之后、传递给`Seq2SeqTrainer`之前，应用一个预处理函数来完成这一步骤。这通常通过`datasets.Dataset.map`方法来完成，它允许你对数据集中的每个元素应用一个自定义函数，从而完成诸如分词、编码等操作。
+
+对于`data_collator`，`Seq2SeqTrainer`确实允许你传递一个数据整理函数，该函数在每个训练/评估步骤中动态地对批次数据进行处理，比如填充不等长的序列到相同长度。对于序列到序列任务，`transformers`库提供了`DataCollatorForSeq2Seq`，它是为这类任务量身定做的。
+
+### 示例流程
+
+1. **加载并预处理数据集**：加载数据集并使用`.map`方法应用预处理函数，将文本转换为模型可以处理的格式。
+2. **定义`data_collator`**：实例化一个适合你任务的`data_collator`，如`DataCollatorForSeq2Seq`。
+3. **配置和初始化`Seq2SeqTrainer`**：创建`Seq2SeqTrainingArguments`实例来配置训练参数，并初始化`Seq2SeqTrainer`，将处理好的数据集、`data_collator`和其他配置传递给它。
+
+### 示例代码
+
+```python
+from datasets import load_dataset
+from transformers import (
+    AutoTokenizer,
+    AutoModelForSeq2SeqLM,
+    DataCollatorForSeq2Seq,
+    Seq2SeqTrainer,
+    Seq2SeqTrainingArguments,
+)
+
+# 加载数据集
+dataset = load_dataset('squad')
+tokenizer = AutoTokenizer.from_pretrained('bert-base-uncased')
+
+# 预处理函数
+def preprocess_function(examples):
+    model_inputs = tokenizer(examples['question'], max_length=128, truncation=True, padding='max_length')
+    with tokenizer.as_target_tokenizer():
+        labels = tokenizer(examples['answers']['text'], max_length=128, truncation=True, padding='max_length')
+    model_inputs['labels'] = labels['input_ids']
+    return model_inputs
+
+# 应用预处理
+train_dataset = dataset['train'].map(preprocess_function, batched=True)
+
+# 定义 data_collator
+data_collator = DataCollatorForSeq2Seq(tokenizer=tokenizer, model=None)
+
+# 定义训练参数
+training_args = Seq2SeqTrainingArguments(
+    output_dir='./results',
+    num_train_epochs=1,
+    per_device_train_batch_size=8,
+    # 其他参数...
+)
+
+# 初始化模型
+model = AutoModelForSeq2SeqLM.from_pretrained('bert-base-uncased')
+
+# 初始化 Seq2SeqTrainer
+trainer = Seq2SeqTrainer(
+    model=model,
+    args=training_args,
+    train_dataset=train_dataset,
+    data_collator=data_collator,
+    # 可以添加 compute_metrics 函数来计算评估指标
+)
+
+# 开始训练
+trainer.train()
+```
+
+这个示例中，我们首先加载了`squad`数据集，并定义了一个预处理函数`preprocess_function`，该函数使用分词器对问题进行编码，并将答案文本作为标签。然后我们应用这个函数到训练集上，初始化了`DataCollatorForSeq2Seq`，并将处理好的训练集和数据整理函数传递给了`Seq2SeqTrainer`，最后启动训练过程。
+
+请注意，这个示例只是为了说明如何在传递数据集给`Seq2SeqTrainer`之前对其进行预处理。实际的预处理步骤会根据你的具体任务和数据格式而有所不同。
+
