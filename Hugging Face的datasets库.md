@@ -237,3 +237,47 @@ trainer.train()
 
 请注意，这个示例只是为了说明如何在传递数据集给`Seq2SeqTrainer`之前对其进行预处理。实际的预处理步骤会根据你的具体任务和数据格式而有所不同。
 
+
+# 5.在训练或验证或预测时，设置batch_size是如何设置的？
+
+在训练、验证或预测时，`batch_size`的设置通常在两个地方进行配置：
+
+1. **训练参数中**：通过`TrainingArguments`（或对于序列到序列模型，是`Seq2SeqTrainingArguments`）在初始化训练器（如`Trainer`或`Seq2SeqTrainer`）时进行设置。
+2. **`DataLoader`中**：如果你直接使用PyTorch的`DataLoader`来迭代数据，`batch_size`可以在其构造函数中直接设置。
+
+### 设置`batch_size`在训练参数中
+
+当使用Hugging Face的`Trainer`或`Seq2SeqTrainer`进行训练时，可以通过`TrainingArguments`设置`per_device_train_batch_size`和`per_device_eval_batch_size`来分别指定训练和评估时每个设备的批次大小。如果使用多个GPU或TPU核心，实际的总`batch_size`将是这个数值乘以设备数量。
+
+```python
+from transformers import Seq2SeqTrainingArguments
+
+training_args = Seq2SeqTrainingArguments(
+    output_dir='./results',
+    num_train_epochs=3,
+    per_device_train_batch_size=16,  # 每个设备的训练批次大小
+    per_device_eval_batch_size=8,    # 每个设备的评估批次大小
+    # 其他参数...
+)
+```
+
+### 设置`batch_size`在`DataLoader`中
+
+如果你使用PyTorch的`DataLoader`，可以在其构造函数中设置`batch_size`参数。这对于直接使用PyTorch进行更自定义的训练循环时很有用。
+
+```python
+from torch.utils.data import DataLoader
+
+train_dataloader = DataLoader(train_dataset, batch_size=16, shuffle=True)  # 训练批次大小
+eval_dataloader = DataLoader(eval_dataset, batch_size=8)                   # 评估批次大小
+```
+
+### 预测时设置`batch_size`
+
+预测（或推理）时设置`batch_size`也可以通过`DataLoader`或者在使用`Trainer.predict`方法时通过`TrainingArguments`中的`per_device_eval_batch_size`来指定，这取决于你是直接使用`DataLoader`进行预测，还是通过`Trainer`的`predict`方法。
+
+### 注意事项
+
+- 选择适当的`batch_size`很重要，因为它会直接影响模型训练的内存/显存消耗、速度以及可能的学习效果。较大的`batch_size`可以提高内存利用率和训练速度，但也可能增加内存/显存的需求。此外，`batch_size`的大小也可能会影响模型的最终性能，这与所使用的优化器和学习率调整策略有关。
+- 在某些情况下，你可能需要根据可用的硬件资源调整`batch_size`。如果遇到内存/显存不足的错误，尝试减小`batch_size`可能有助于解决问题。
+- 对于大多数Hugging Face的`Trainer`用法，`per_device_train_batch_size`和`per_device_eval_batch_size`是自动管理的，你不需要手动创建`DataLoader`。但是，了解如何在`DataLoader`中设置`batch_size`对于深入理解数据加载和处理过程仍然很有帮助。
