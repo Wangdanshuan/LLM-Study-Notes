@@ -318,3 +318,43 @@ predictions = predict_in_batches(test_dataset)
 为了按批次处理数据集并进行预测，你需要确保每个批次都是一个有效的数据集对象。你可以使用`datasets.Dataset.select`方法从原始数据集中创建包含特定索引的子集。然后，可以将这些子集分别传递给`predict`方法以进行预测。
 
 修正后的代码示例如下：
+from datasets import load_dataset
+from transformers import AutoTokenizer
+
+# 假定您已经有了一个训练好的模型和分词器
+model = # 您的模型
+tokenizer = AutoTokenizer.from_pretrained('bert-base-uncased')  # 以BERT为例
+
+# 加载数据集
+raw_dataset = load_dataset('squad', split='validation')
+
+# 预处理函数：对问题进行分词处理
+def preprocess_function(examples):
+    return tokenizer(examples['question'], truncation=True, padding=True)
+
+# 应用预处理函数
+test_dataset = raw_dataset.map(preprocess_function, batched=True)
+
+# 函数：分批处理数据并进行预测
+def predict_in_batches(dataset, batch_size=32*30):
+    predictions = []
+    # 分批处理
+    for i in range(0, len(dataset), batch_size):
+        # 创建每个批次的子集
+        batch_dataset = dataset.select(range(i, min(i + batch_size, len(dataset))))
+        # 对每个批次进行预测
+        preds = trainer.predict(batch_dataset)
+        predictions.append(preds.predictions)
+    # 合并预测结果
+    return np.concatenate(predictions, axis=0)
+
+# 初始化 Seq2SeqTrainer
+trainer = Seq2SeqTrainer(
+    model=model,
+    args=training_args,  # 确保已经设置了 Seq2SeqTrainingArguments
+    tokenizer=tokenizer,
+)
+
+# 对整个测试集进行分批预测
+predictions = predict_in_batches(test_dataset)
+
