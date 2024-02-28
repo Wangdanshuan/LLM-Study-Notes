@@ -357,4 +357,12 @@ trainer = Seq2SeqTrainer(
 
 # 对整个测试集进行分批预测
 predictions = predict_in_batches(test_dataset)
+```
+
+在这个示例中，首先使用load_dataset加载了原始数据集，并定义了一个预处理函数preprocess_function来使用分词器对数据进行编码。然后，使用map方法应用这个函数，得到了预处理后的test_dataset。之后，定义了predict_in_batches函数，将预处理后的数据集分成多个批次，并对每个批次使用trainer.predict进行预测。
+
+请注意，根据您的具体任务和模型，您可能需要调整预处理函数和其他代码细节。例如，如果您的任务是问答或其他需要上下文的任务，您可能还需要包括上下文文本进行编码。
+
+
+
 
