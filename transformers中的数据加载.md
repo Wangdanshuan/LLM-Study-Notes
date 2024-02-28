@@ -1,4 +1,4 @@
-# 1. DataLoader与Collator的区分
+# 1. DataLoader与data_collator的区分
 
 `DataLoader`不是`Dataset`对象内置的方法，而是PyTorch中的一个独立类，用于包装任何类型的`Dataset`对象。它为数据提供了一个可迭代对象，允许您以批次的形式高效地加载数据，同时也提供了多进程加载和批次后处理（如打乱、采样等）的功能。
 
