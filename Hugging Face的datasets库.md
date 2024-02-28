@@ -318,6 +318,7 @@ predictions = predict_in_batches(test_dataset)
 为了按批次处理数据集并进行预测，你需要确保每个批次都是一个有效的数据集对象。你可以使用`datasets.Dataset.select`方法从原始数据集中创建包含特定索引的子集。然后，可以将这些子集分别传递给`predict`方法以进行预测。
 
 修正后的代码示例如下：
+```
 from datasets import load_dataset
 from transformers import AutoTokenizer
 
